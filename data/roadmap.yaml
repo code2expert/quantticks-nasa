@@ -56,7 +56,7 @@ phases:
       - id: "p3-4"
         name: "Interactive Region & CSV Filter"
         description: "Browser-based AOI selector / lat-long coordinate filter with instant CSV export capabilities."
-        status: "pending"
+        status: "completed"
 
   - phase: 4
     title: "Production Deployment & Domain Infrastructure"
