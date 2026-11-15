@@ -102,7 +102,7 @@ hotspots_df = con.execute(f"""
     FROM '{R2_PARQUET_GLOB}'
     WHERE frp IS NOT NULL AND latitude IS NOT NULL AND longitude IS NOT NULL
     ORDER BY frp DESC
-    LIMIT 5000
+    LIMIT 10000
 """).fetchdf()
 
 # Build JSON Payload

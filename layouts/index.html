@@ -85,19 +85,27 @@
     </header>
 
     <div class="mission-banner">
-        <strong>Mission Overview:</strong> Real-time environmental intelligence harmonizing orbital thermal detections across NASA &amp; NOAA satellite constellations within a dynamic {{ .Site.Data.active_fires.quota_mb }} MB sliding quota window[cite: 25].
+        <strong>Mission Overview:</strong> Real-time environmental intelligence harmonizing orbital thermal detections across NASA &amp; NOAA satellite constellations within a dynamic {{ .Site.Data.active_fires.quota_mb }} MB sliding quota window.
     </div>
 
     <!-- Filter Bar -->
     <div class="filter-bar">
         <div class="filter-controls">
             <div class="control-group">
-                <label for="aoi-select">Target Global Region:</label>
+                <label for="aoi-select">Target Region:</label>
                 <select id="aoi-select">
                     <option value="ALL">All Active Global Regions</option>
                     {{ range .Site.Data.active_fires.active_aois }}
                     <option value="{{ .region }}">{{ .region }}</option>
                     {{ end }}
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="sensor-select">Sensor Platform:</label>
+                <select id="sensor-select">
+                    <option value="ALL">MODIS + VIIRS (Combined)</option>
+                    <option value="MODIS">MODIS Only</option>
+                    <option value="VIIRS">VIIRS Only</option>
                 </select>
             </div>
             <div class="control-group">
@@ -114,17 +122,17 @@
         <div class="card">
             <div class="card-title">Active Thermal Events Audited</div>
             <div class="metric-value" id="metric-events">0</div>
-            <div class="metric-sub" id="metric-events-sub">Loaded from R2 Quota Window[cite: 25]</div>
+            <div class="metric-sub" id="metric-events-sub">Loaded from R2 Quota Window</div>
         </div>
         <div class="card">
             <div class="card-title">Data Compression Ratio</div>
             <div class="metric-value" style="color: var(--accent-green);">~80.5%</div>
-            <div class="metric-sub">ZSTD Parquet Ingestion via Quantticks[cite: 25]</div>
+            <div class="metric-sub">ZSTD Parquet Ingestion via Quantticks</div>
         </div>
         <div class="card">
             <div class="card-title">Harmonized Sensor Network</div>
             <div class="metric-value" style="color: var(--accent-purple);">MODIS &amp; VIIRS</div>
-            <div class="metric-sub">Cross-calibrated global spatial telemetry[cite: 25]</div>
+            <div class="metric-sub">Cross-calibrated global spatial telemetry</div>
         </div>
     </div>
 
@@ -146,8 +154,8 @@
     </div>
 
     <footer>
-        <div><strong>NASA Space Apps Challenge</strong> &bull; Team Quantticks Oracle (St. John's, NL)[cite: 25]</div>
-        <div>Data Ingestion &amp; Compression <strong>Powered by Quantticks</strong>[cite: 25]</div>
+        <div><strong>NASA Space Apps Challenge</strong> &bull; Team Quantticks Oracle (St. John's, NL)</div>
+        <div>Data Ingestion &amp; Compression <strong>Powered by Quantticks</strong></div>
     </footer>
 </div>
 
@@ -171,6 +179,7 @@
     };
 
     const aoiSelect = document.getElementById('aoi-select');
+    const sensorSelect = document.getElementById('sensor-select');
     const confSlider = document.getElementById('conf-slider');
     const confValue = document.getElementById('conf-value');
     const metricEvents = document.getElementById('metric-events');
@@ -179,19 +188,34 @@
 
     function renderDashboard() {
         const selectedRegion = aoiSelect.value;
+        const selectedSensorMode = sensorSelect.value;
         const minConf = parseFloat(confSlider.value);
         confValue.textContent = `${minConf}%`;
 
+        // Filter summary metrics
         const filteredSummary = telemetryDataset.filter(row => {
             const regionMatch = (selectedRegion === 'ALL' || row.region === selectedRegion);
             const confMatch = row.avgConfidence >= minConf;
-            return regionMatch && confMatch;
+            let sensorMatch = true;
+            if (selectedSensorMode === 'MODIS') {
+                sensorMatch = row.sensor.toUpperCase().includes('MODIS');
+            } else if (selectedSensorMode === 'VIIRS') {
+                sensorMatch = row.sensor.toUpperCase().includes('VIIRS');
+            }
+            return regionMatch && confMatch && sensorMatch;
         });
 
+        // Filter precise map hotspots
         const filteredHotspots = hotspotDataset.filter(pt => {
             const regionMatch = (selectedRegion === 'ALL' || pt.region === selectedRegion);
             const confMatch = pt.confidence >= minConf;
-            return regionMatch && confMatch;
+            let sensorMatch = true;
+            if (selectedSensorMode === 'MODIS') {
+                sensorMatch = pt.sensor.toUpperCase().includes('MODIS');
+            } else if (selectedSensorMode === 'VIIRS') {
+                sensorMatch = pt.sensor.toUpperCase().includes('VIIRS');
+            }
+            return regionMatch && confMatch && sensorMatch;
         });
 
         let grandTotal = 0;
@@ -202,16 +226,16 @@
         });
 
         metricEvents.textContent = grandTotal.toLocaleString();
-        metricEventsSub.textContent = selectedRegion === 'ALL' ? `Harmonized across ${filteredSummary.length} active global regions` : `Filtered for region: ${selectedRegion}`;
+        metricEventsSub.textContent = selectedRegion === 'ALL' ? `Harmonized across ${filteredSummary.length} active sensor streams` : `Filtered for region: ${selectedRegion}`;
 
-        // 1. Zoomable ScatterGeo Hotspot Map
+        // 1. Zoomable ScatterGeo Map
         let mapCenter = undefined;
         let mapScale = 1;
         if (selectedRegion !== 'ALL' && filteredHotspots.length > 0) {
             const avgLat = filteredHotspots.reduce((s, p) => s + p.lat, 0) / filteredHotspots.length;
             const avgLon = filteredHotspots.reduce((s, p) => s + p.lon, 0) / filteredHotspots.length;
             mapCenter = { lat: avgLat, lon: avgLon };
-            mapScale = 3.5; // Zoom into region
+            mapScale = 3.5;
         }
 
         Plotly.react('hotspot-geo-map', [{
@@ -226,7 +250,7 @@
             }
         }], {
             ...darkLayout,
-            title: { text: selectedRegion === 'ALL' ? 'Global High-FRP Thermal Hotspots (Coordinate Precision)' : `Zoomed Thermal Hotspots — ${selectedRegion}`, font: { size: 16 } },
+            title: { text: selectedRegion === 'ALL' ? `Global Thermal Hotspots (${selectedSensorMode === 'ALL' ? 'MODIS & VIIRS' : selectedSensorMode + ' Only'})` : `Zoomed Thermal Hotspots — ${selectedRegion}`, font: { size: 16 } },
             geo: {
                 scope: 'world', projection: { type: 'natural earth', scale: mapScale }, center: mapCenter,
                 bgcolor: '#111827', showland: true, landcolor: '#1f2937', showocean: true, oceancolor: '#090d16',
@@ -263,18 +287,26 @@
     }
 
     exportCsvBtn.addEventListener('click', () => {
-        const filtered = hotspotDataset.filter(pt => (aoiSelect.value === 'ALL' || pt.region === aoiSelect.value) && pt.confidence >= parseFloat(confSlider.value));
+        const filtered = hotspotDataset.filter(pt => {
+            const regionMatch = (aoiSelect.value === 'ALL' || pt.region === aoiSelect.value);
+            const confMatch = pt.confidence >= parseFloat(confSlider.value);
+            let sensorMatch = true;
+            if (sensorSelect.value === 'MODIS') sensorMatch = pt.sensor.toUpperCase().includes('MODIS');
+            else if (sensorSelect.value === 'VIIRS') sensorMatch = pt.sensor.toUpperCase().includes('VIIRS');
+            return regionMatch && confMatch && sensorMatch;
+        });
         const headers = ['Latitude', 'Longitude', 'FRP_MW', 'Confidence_Pct', 'Sensor_Type', 'Region'];
         const rows = filtered.map(r => [r.lat, r.lon, r.frp, r.confidence, `"${r.sensor}"`, `"${r.region}"`].join(','));
         const blob = new Blob([[headers.join(','), ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', `quantticks_nasa_hotspots_${aoiSelect.value.toLowerCase().replace(/[\s\/]+/g, '_')}.csv`);
+        link.setAttribute('download', `quantticks_nasa_hotspots_${sensorSelect.value.toLowerCase()}_${aoiSelect.value.toLowerCase().replace(/[\s\/]+/g, '_')}.csv`);
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
     });
 
     aoiSelect.addEventListener('change', renderDashboard);
+    sensorSelect.addEventListener('change', renderDashboard);
     confSlider.addEventListener('input', renderDashboard);
     renderDashboard();
 </script>
