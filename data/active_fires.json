@@ -1,0 +1,138 @@
+{
+  "quota_mb": 10,
+  "scope": "global",
+  "active_aois": [
+    {
+      "region": "Equatorial / Africa & South America",
+      "sensor_type": "MODIS_NRT"
+    },
+    {
+      "region": "Equatorial / Africa & South America",
+      "sensor_type": "VIIRS_NOAA20_NRT"
+    },
+    {
+      "region": "Europe / Northern Asia",
+      "sensor_type": "VIIRS_NOAA20_NRT"
+    },
+    {
+      "region": "Europe / Northern Asia",
+      "sensor_type": "MODIS_NRT"
+    },
+    {
+      "region": "North America",
+      "sensor_type": "MODIS"
+    },
+    {
+      "region": "North America / Eurasia",
+      "sensor_type": "VIIRS_NOAA20_NRT"
+    },
+    {
+      "region": "North America / Eurasia",
+      "sensor_type": "MODIS_NRT"
+    },
+    {
+      "region": "South America",
+      "sensor_type": "VIIRS"
+    },
+    {
+      "region": "Southern Hemisphere / Oceania & South America",
+      "sensor_type": "VIIRS_NOAA20_NRT"
+    },
+    {
+      "region": "Southern Hemisphere / Oceania & South America",
+      "sensor_type": "MODIS_NRT"
+    }
+  ],
+  "summary_metrics": [
+    {
+      "region": "Equatorial / Africa & South America",
+      "sensor_type": "VIIRS_NOAA20_NRT",
+      "total_detections": 27767,
+      "avg_confidence": 50.0,
+      "max_frp": 412.1700134277344,
+      "earliest_time": "2026-11-15 00:20:00",
+      "latest_time": "2026-11-15 13:10:00"
+    },
+    {
+      "region": "Europe / Northern Asia",
+      "sensor_type": "VIIRS_NOAA20_NRT",
+      "total_detections": 6492,
+      "avg_confidence": 50.0,
+      "max_frp": 83.37000274658203,
+      "earliest_time": "2026-11-15 00:02:00",
+      "latest_time": "2026-11-15 13:16:00"
+    },
+    {
+      "region": "Southern Hemisphere / Oceania & South America",
+      "sensor_type": "VIIRS_NOAA20_NRT",
+      "total_detections": 4563,
+      "avg_confidence": 50.0,
+      "max_frp": 449.8599853515625,
+      "earliest_time": "2026-11-15 00:28:00",
+      "latest_time": "2026-11-15 13:01:00"
+    },
+    {
+      "region": "Equatorial / Africa & South America",
+      "sensor_type": "MODIS_NRT",
+      "total_detections": 3862,
+      "avg_confidence": 66.51,
+      "max_frp": 1456.1800537109375,
+      "earliest_time": "2026-11-15 00:02:00",
+      "latest_time": "2026-11-15 14:52:00"
+    },
+    {
+      "region": "Europe / Northern Asia",
+      "sensor_type": "MODIS_NRT",
+      "total_detections": 882,
+      "avg_confidence": 58.5,
+      "max_frp": 194.61000061035156,
+      "earliest_time": "2026-11-15 00:41:00",
+      "latest_time": "2026-11-15 15:05:00"
+    },
+    {
+      "region": "Southern Hemisphere / Oceania & South America",
+      "sensor_type": "MODIS_NRT",
+      "total_detections": 723,
+      "avg_confidence": 71.2,
+      "max_frp": 3468.909912109375,
+      "earliest_time": "2026-11-15 00:00:00",
+      "latest_time": "2026-11-15 14:44:00"
+    },
+    {
+      "region": "North America / Eurasia",
+      "sensor_type": "VIIRS_NOAA20_NRT",
+      "total_detections": 598,
+      "avg_confidence": 50.0,
+      "max_frp": 46.290000915527344,
+      "earliest_time": "2026-11-15 06:56:00",
+      "latest_time": "2026-11-15 12:10:00"
+    },
+    {
+      "region": "North America / Eurasia",
+      "sensor_type": "MODIS_NRT",
+      "total_detections": 53,
+      "avg_confidence": 68.57,
+      "max_frp": 461.1700134277344,
+      "earliest_time": "2026-11-15 00:09:00",
+      "latest_time": "2026-11-15 13:57:00"
+    },
+    {
+      "region": "North America",
+      "sensor_type": "MODIS",
+      "total_detections": 2,
+      "avg_confidence": 85.0,
+      "max_frp": 24.5,
+      "earliest_time": "2026-11-15 10:30:00",
+      "latest_time": "2026-11-15 10:30:00"
+    },
+    {
+      "region": "South America",
+      "sensor_type": "VIIRS",
+      "total_detections": 1,
+      "avg_confidence": 92.0,
+      "max_frp": 45.099998474121094,
+      "earliest_time": "2026-11-15 11:00:00",
+      "latest_time": "2026-11-15 11:00:00"
+    }
+  ]
+}

@@ -257,30 +257,25 @@
     </header>
 
     <div class="mission-banner">
-        <strong>Mission Overview:</strong> Real-time environmental intelligence harmonizing orbital thermal detections across NASA &amp; NOAA satellite constellations—delivering ultra-compact, rapid-response wildfire telemetry for planetary monitoring.
+        <strong>Mission Overview:</strong> Real-time environmental intelligence harmonizing orbital thermal detections across NASA &amp; NOAA satellite constellations—delivering ultra-compact, rapid-response wildfire telemetry within a dynamic {{ .Site.Data.active_fires.quota_mb }} MB sliding quota window.
     </div>
 
     <!-- Interactive AOI Region & Confidence Filter Bar -->
     <div class="filter-bar">
         <div class="filter-controls">
             <div class="control-group">
-                <label for="aoi-select">Target AOI Region:</label>
+                <label for="aoi-select">Target Global Region:</label>
                 <select id="aoi-select">
-                    <option value="ALL">All Global Regions (8 AOIs)</option>
-                    <option value="Newfoundland">Newfoundland, Canada</option>
-                    <option value="California">California, USA</option>
-                    <option value="Alberta">Alberta, Canada</option>
-                    <option value="Amazon Basin">Amazon Basin, Brazil</option>
-                    <option value="Mediterranean">Mediterranean Basin</option>
-                    <option value="SE Australia">Southeast Australia</option>
-                    <option value="Siberia Taiga">Siberia Taiga</option>
-                    <option value="Indonesia">Indonesia Archipelago</option>
+                    <option value="ALL">All Active Global Regions</option>
+                    {{ range .Site.Data.active_fires.active_aois }}
+                    <option value="{{ .region }}">{{ .region }} ({{ .sensor_type }})</option>
+                    {{ end }}
                 </select>
             </div>
             <div class="control-group">
                 <label for="conf-slider">Min Confidence:</label>
-                <input type="range" id="conf-slider" min="60" max="95" step="5" value="60">
-                <span class="conf-readout" id="conf-value">60%</span>
+                <input type="range" id="conf-slider" min="0" max="100" step="5" value="50">
+                <span class="conf-readout" id="conf-value">50%</span>
             </div>
         </div>
         <button class="btn-export" id="export-csv-btn" title="Download filtered telemetry slice as CSV">
@@ -292,18 +287,18 @@
     <div class="grid-metrics">
         <div class="card">
             <div class="card-title">Active Thermal Events Audited</div>
-            <div class="metric-value" id="metric-events">814</div>
-            <div class="metric-sub" id="metric-events-sub">Verified across all 8 global Areas of Interest</div>
+            <div class="metric-value" id="metric-events">0</div>
+            <div class="metric-sub" id="metric-events-sub">Loaded dynamically from R2 Quota Window</div>
         </div>
         <div class="card">
             <div class="card-title">Data Compression Ratio</div>
             <div class="metric-value" style="color: var(--accent-green);">~80.5%</div>
-            <div class="metric-sub">High-efficiency ingestion via Quantticks</div>
+            <div class="metric-sub">ZSTD Parquet Ingestion via Quantticks</div>
         </div>
         <div class="card">
             <div class="card-title">Harmonized Sensor Network</div>
             <div class="metric-value" style="color: var(--accent-purple);">MODIS &amp; VIIRS</div>
-            <div class="metric-sub">Cross-calibrated 375m &amp; 1km spatial resolution</div>
+            <div class="metric-sub">Cross-calibrated global spatial telemetry</div>
         </div>
     </div>
 
@@ -324,16 +319,19 @@
 </div>
 
 <script>
-    // Harmonized Multi-Sensor AOI Telemetry Ledger (814 Total Events across 8 Global AOIs)
+    // Dynamically injected telemetry summary metrics from DuckDB / R2 sliding quota export
     const telemetryDataset = [
-        { region: 'Newfoundland', lat: 47.5, lon: -53.0, confidence: 80, frp: 34.2, modis: 8,  snpp: 24, noaa20: 16 },
-        { region: 'California',   lat: 36.7, lon: -119.4, confidence: 95, frp: 112.8, modis: 28, snpp: 96, noaa20: 68 },
-        { region: 'Alberta',      lat: 55.2, lon: -114.5, confidence: 88, frp: 78.4, modis: 18, snpp: 62, noaa20: 42 },
-        { region: 'Amazon Basin', lat: -3.0, lon: -60.0,  confidence: 98, frp: 145.6, modis: 32, snpp: 110, noaa20: 76 },
-        { region: 'Mediterranean',lat: 40.0, lon: 15.0,   confidence: 65, frp: 29.1, modis: 7,  snpp: 21, noaa20: 15 },
-        { region: 'SE Australia', lat: -35.0,lon: 145.0,  confidence: 85, frp: 68.9, modis: 12, snpp: 42, noaa20: 28 },
-        { region: 'Siberia Taiga',lat: 55.0, lon: 100.0,  confidence: 72, frp: 41.5, modis: 9,  snpp: 31, noaa20: 22 },
-        { region: 'Indonesia',    lat: -1.8, lon: 113.9,  confidence: 78, frp: 52.0, modis: 6,  snpp: 24, noaa20: 17 }
+        {{ range .Site.Data.active_fires.summary_metrics }}
+        {
+            region: "{{ .region }}",
+            sensor: "{{ .sensor_type }}",
+            detections: {{ .total_detections }},
+            avgConfidence: {{ .avg_confidence }},
+            maxFrp: {{ .max_frp }},
+            earliest: "{{ .earliest_time }}",
+            latest: "{{ .latest_time }}"
+        },
+        {{ end }}
     ];
 
     const darkLayout = {
@@ -355,11 +353,11 @@
 
     function getFilteredData() {
         const selectedRegion = aoiSelect.value;
-        const minConf = parseInt(confSlider.value, 10);
+        const minConf = parseFloat(confSlider.value);
 
         return telemetryDataset.filter(row => {
             const regionMatch = (selectedRegion === 'ALL' || row.region === selectedRegion);
-            const confMatch = row.confidence >= minConf;
+            const confMatch = row.avgConfidence >= minConf;
             return regionMatch && confMatch;
         });
     }
@@ -367,132 +365,94 @@
     function renderDashboard() {
         const filtered = getFilteredData();
         const selectedRegion = aoiSelect.value;
-        const minConf = parseInt(confSlider.value, 10);
+        const minConf = confSlider.value;
         confValue.textContent = `${minConf}%`;
 
-        // Aggregate sensor counts
-        let totalModis = 0;
-        let totalSnpp = 0;
-        let totalNoaa20 = 0;
+        // Calculate totals from filtered dataset
+        let grandTotalDetections = 0;
+        let sensorCounts = {};
 
         filtered.forEach(item => {
-            totalModis += item.modis;
-            totalSnpp += item.snpp;
-            totalNoaa20 += item.noaa20;
+            grandTotalDetections += item.detections;
+            sensorCounts[item.sensor] = (sensorCounts[item.sensor] || 0) + item.detections;
         });
 
-        const grandTotal = totalModis + totalSnpp + totalNoaa20;
-        metricEvents.textContent = grandTotal.toLocaleString();
+        metricEvents.textContent = grandTotalDetections.toLocaleString();
         metricEventsSub.textContent = selectedRegion === 'ALL'
-            ? `Verified across ${filtered.length} matching AOIs (Confidence ≥ ${minConf}%)`
-            : `Filtered for ${selectedRegion} AOI (Confidence ≥ ${minConf}%)`;
+            ? `Harmonized across ${filtered.length} active global regions`
+            : `Filtered for region: ${selectedRegion}`;
 
-        // 1. Update Global Map
-        const mapData = [{
-            type: 'scattergeo',
-            mode: 'markers',
-            lat: filtered.map(d => d.lat),
-            lon: filtered.map(d => d.lon),
-            text: filtered.map(d => `${d.region} AOI | Events: ${d.modis + d.snpp + d.noaa20} | Confidence: ${d.confidence}% | Mean FRP: ${d.frp} MW`),
-            hoverinfo: 'text',
-            marker: {
-                size: filtered.map(d => Math.max(12, Math.min(26, (d.modis + d.snpp + d.noaa20) / 8))),
-                color: filtered.map(d => d.confidence),
-                colorscale: 'YlOrRd',
-                cmin: 60,
-                cmax: 100,
-                line: { color: '#111827', width: 1.5 },
-                showscale: true,
-                colorbar: {
-                    title: { text: 'Confidence (%)', font: { size: 12, color: '#9ca3af' } },
-                    tickfont: { color: '#9ca3af' },
-                    thickness: 12
-                }
-            }
-        }];
+        // 1. Update Sensor Breakdown Chart
+        const sensors = Object.keys(sensorCounts);
+        const sensorValues = Object.values(sensorCounts);
 
-        const mapLayout = {
-            ...darkLayout,
-            title: {
-                text: selectedRegion === 'ALL'
-                    ? 'Global Active Fire Telemetry & AOI Hotspots'
-                    : `Active Fire Telemetry — ${selectedRegion} AOI`,
-                font: { size: 16 }
-            },
-            geo: {
-                scope: 'world',
-                projection: { type: 'natural earth' },
-                center: filtered.length === 1 ? { lat: filtered[0].lat, lon: filtered[0].lon } : undefined,
-                bgcolor: '#111827',
-                showland: true,
-                landcolor: '#1f2937',
-                subunitcolor: '#374151',
-                countrycolor: '#374151',
-                showocean: true,
-                oceancolor: '#090d16',
-                showlakes: true,
-                lakecolor: '#090d16',
-                coastlinecolor: '#4b5563',
-                coastlinewidth: 0.7
-            }
-        };
-
-        Plotly.react('global-map', mapData, mapLayout, { responsive: true, displayModeBar: false });
-
-        // 2. Update Sensor Breakdown Bar Chart
         const barData = [{
-            x: ['MODIS (1km)', 'VIIRS SNPP (375m)', 'VIIRS NOAA-20 (375m)'],
-            y: [totalModis, totalSnpp, totalNoaa20],
+            x: sensors.length > 0 ? sensors : ['No Active Data'],
+            y: sensorValues.length > 0 ? sensorValues : [0],
             type: 'bar',
-            text: [totalModis.toString(), totalSnpp.toString(), totalNoaa20.toString()],
-            textposition: 'auto',
             marker: {
-                color: ['#10b981', '#8b5cf6', '#3b82f6']
+                color: ['#10b981', '#8b5cf6', '#3b82f6', '#f59e0b']
             }
         }];
 
         const barLayout = {
             ...darkLayout,
-            title: { text: 'Thermal Detections by Satellite Sensor', font: { size: 16 } },
+            title: { text: 'Thermal Detections by Sensor Platform', font: { size: 16 } },
             xaxis: {
-                title: { text: 'Orbital Sensor Platform', font: { size: 12, color: '#9ca3af' } },
+                title: { text: 'Satellite Sensor', font: { size: 12, color: '#9ca3af' } },
                 tickfont: { color: '#d1d5db' },
                 gridcolor: '#1f2937'
             },
             yaxis: {
-                title: { text: 'Harmonized Event Count', font: { size: 12, color: '#9ca3af' } },
+                title: { text: 'Total Detections', font: { size: 12, color: '#9ca3af' } },
                 tickfont: { color: '#d1d5db' },
                 gridcolor: '#1f2937'
             }
         };
 
         Plotly.react('sensor-breakdown', barData, barLayout, { responsive: true, displayModeBar: false });
+
+        // 2. Global Regional Overview Bar Chart
+        const mapData = [{
+            type: 'bar',
+            orientation: 'h',
+            x: filtered.map(d => d.detections),
+            y: filtered.map(d => `${d.region} (${d.sensor})`),
+            marker: { color: filtered.map(d => d.avgConfidence), colorscale: 'Viridis' }
+        }];
+
+        const mapLayout = {
+            ...darkLayout,
+            title: { text: 'Active Telemetry Volume by Global Region & Sensor', font: { size: 16 } },
+            xaxis: { title: { text: 'Detections Count', font: { size: 12, color: '#9ca3af' } }, gridcolor: '#1f2937' },
+            yaxis: { title: { text: '', font: { size: 12, color: '#9ca3af' } }, tickfont: { size: 10, color: '#d1d5db' } }
+        };
+
+        Plotly.react('global-map', mapData, mapLayout, { responsive: true, displayModeBar: false });
     }
 
     // CSV Export Handler
     exportCsvBtn.addEventListener('click', () => {
         const filtered = getFilteredData();
-        const headers = ['AOI_Region', 'Latitude', 'Longitude', 'Confidence_Pct', 'Mean_FRP_MW', 'MODIS_1km_Count', 'VIIRS_SNPP_375m_Count', 'VIIRS_NOAA20_375m_Count', 'Total_Events'];
+        const headers = ['Region', 'Sensor_Type', 'Total_Detections', 'Avg_Confidence', 'Max_FRP_MW', 'Earliest_Source_Time', 'Latest_Source_Time'];
         const rows = filtered.map(r => [
             `"${r.region}"`,
-            r.lat,
-            r.lon,
-            r.confidence,
-            r.frp,
-            r.modis,
-            r.snpp,
-            r.noaa20,
-            r.modis + r.snpp + r.noaa20
+            `"${r.sensor}"`,
+            r.detections,
+            r.avgConfidence,
+            r.maxFrp,
+            `"${r.earliest}"`,
+            `"${r.latest}"`
         ].join(','));
 
         const csvContent = [headers.join(','), ...rows].join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
 
-        const regionSlug = aoiSelect.value.toLowerCase().replace(/\s+/g, '_');
+        const regionSlug = aoiSelect.value.toLowerCase().replace(/[\s\/]+/g, '_');
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', `quantticks_nasa_telemetry_${regionSlug}.csv`);
+        link.setAttribute('download', `quantticks_nasa_global_telemetry_${regionSlug}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
