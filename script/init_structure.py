@@ -2,7 +2,7 @@ import os
 import sys
 from pathlib import Path
 
-# Define the Oracle-aligned architecture tree for the NASA Harmonization & Quantticks pipeline
+# 1Define the Oracle-aligned architecture tree for the NASA Harmonization & Quantticks pipeline
 ORACLE_NASA_STRUCTURE = {
     "00-discovery-layer": {
         "files": {
