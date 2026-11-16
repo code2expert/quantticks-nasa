@@ -160,6 +160,19 @@
 </div>
 
 <script>
+    // Deduplicate Target Region dropdown options on load
+    const aoiSelect = document.getElementById('aoi-select');
+    const seenRegions = new Set();
+    Array.from(aoiSelect.options).forEach(opt => {
+        if (opt.value !== 'ALL') {
+            if (seenRegions.has(opt.value)) {
+                opt.remove();
+            } else {
+                seenRegions.add(opt.value);
+            }
+        }
+    });
+
     const telemetryDataset = [
         {{ range .Site.Data.active_fires.summary_metrics }}
         { region: "{{ .region }}", sensor: "{{ .sensor_type }}", detections: {{ .total_detections }}, avgConfidence: {{ .avg_confidence }}, maxFrp: {{ .max_frp }}, earliest: "{{ .earliest_source_time }}", latest: "{{ .latest_source_time }}" },
@@ -178,7 +191,6 @@
         margin: { t: 48, r: 20, b: 44, l: 48 }
     };
 
-    const aoiSelect = document.getElementById('aoi-select');
     const sensorSelect = document.getElementById('sensor-select');
     const confSlider = document.getElementById('conf-slider');
     const confValue = document.getElementById('conf-value');

@@ -197,6 +197,19 @@
 </div>
 
 <script>
+    
+    const aoiSelect = document.getElementById('aoi-select');
+    const seenRegions = new Set();
+    Array.from(aoiSelect.options).forEach(opt => {
+        if (opt.value !== 'ALL') {
+            if (seenRegions.has(opt.value)) {
+                opt.remove();
+            } else {
+                seenRegions.add(opt.value);
+            }
+        }
+    });
+
     const telemetryDataset = [
         
         { region: "Equatorial Africa", sensor: "VIIRS_NOAA20_NRT", detections:  83212 , avgConfidence:  50 , maxFrp:  412.1700134277344 , earliest: "2026-11-15 00:20:00", latest: "2026-11-15 14:52:00" },
@@ -20249,7 +20262,6 @@
         margin: { t: 48, r: 20, b: 44, l: 48 }
     };
 
-    const aoiSelect = document.getElementById('aoi-select');
     const sensorSelect = document.getElementById('sensor-select');
     const confSlider = document.getElementById('conf-slider');
     const confValue = document.getElementById('conf-value');
