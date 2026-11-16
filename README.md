@@ -75,5 +75,3 @@ Open http://localhost:1313 in your browser.
 
 🏆 NASA Space Apps Challenge
 Developed by Team Quantticks Oracle as an open-source contribution to environmental intelligence, disaster response preparedness, and multi-sensor space data accessibility.
-
-Save this as `README.md` in your project root, and your repository will be fully documented and presentation-ready!
