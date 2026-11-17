@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantticks Oracle | Global Wildfire Telemetry Command Center</title>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #090d16;
+            --card-bg: #111827;
+            --card-hover: #161f33;
+            --accent-green: #10b981;
+            --accent-purple: #8b5cf6;
+            --accent-blue: #3b82f6;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --border-color: #1f2937;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.06) 0%, transparent 60%);
+            color: var(--text-main);
+            margin: 0; padding: 24px 32px;
+            line-height: 1.5;
+        }
+        .container { max-width: 1440px; margin: 0 auto; }
+        header {
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border-color); padding-bottom: 18px; margin-bottom: 24px; gap: 16px;
+        }
+        .brand-group { display: flex; flex-direction: column; }
+        .brand { font-size: 1.5rem; font-weight: 800; color: var(--text-main); letter-spacing: 0.04em; display: flex; align-items: center; gap: 10px; }
+        .brand span { color: var(--accent-green); }
+        .subtitle { font-size: 0.875rem; color: var(--text-muted); margin-top: 2px; }
+        .status-badge {
+            background: rgba(16, 185, 129, 0.12); color: var(--accent-green); padding: 8px 16px;
+            border-radius: 9999px; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.35);
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .pulse-dot { width: 8px; height: 8px; background-color: var(--accent-green); border-radius: 50%; box-shadow: 0 0 8px var(--accent-green); }
+        .mission-banner {
+            background: linear-gradient(90deg, rgba(17, 24, 39, 0.9) 0%, rgba(31, 41, 55, 0.5) 100%);
+            border-left: 3px solid var(--accent-green); border: 1px solid var(--border-color);
+            border-radius: 6px; padding: 14px 20px; margin-bottom: 20px; font-size: 0.925rem; color: #d1d5db;
+        }
+        .filter-bar {
+            background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px;
+            padding: 16px 20px; margin-bottom: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;
+        }
+        .filter-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; }
+        .control-group { display: flex; align-items: center; gap: 10px; }
+        .control-group label { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+        select { background-color: #090d16; color: var(--text-main); border: 1px solid #374151; border-radius: 6px; padding: 8px 12px; font-size: 0.875rem; outline: none; cursor: pointer; }
+        select:focus { border-color: var(--accent-green); }
+        input[type="range"] { accent-color: var(--accent-green); cursor: pointer; }
+        .conf-readout { font-size: 0.875rem; font-weight: 700; color: var(--accent-green); min-width: 38px; }
+        .btn-export {
+            background-color: var(--accent-green); color: #06281e; border: none; border-radius: 6px;
+            padding: 9px 16px; font-size: 0.85rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-export:hover { opacity: 0.92; transform: translateY(-1px); }
+        .grid-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 22px 24px; }
+        .card-title { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em; }
+        .metric-value { font-size: 2.25rem; font-weight: 800; color: var(--text-main); line-height: 1.1; margin-bottom: 6px; }
+        .metric-sub { font-size: 0.825rem; color: var(--text-muted); }
+        .grid-charts { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 20px; }
+        .grid-charts-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 20px; margin-bottom: 28px; }
+        .chart-container { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; }
+        footer { border-top: 1px solid var(--border-color); padding-top: 18px; display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 0.825rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="brand-group">
+            <div class="brand">QUANTTICKS ORACLE <span>// GLOBAL WILDFIRE TELEMETRY</span></div>
+            <div class="subtitle">Multi-Satellite Thermal Anomaly Harmonization &amp; Fire Radiative Power Monitoring</div>
+        </div>
+        <div class="status-badge"><span class="pulse-dot"></span> Powered by Quantticks</div>
+    </header>
+
+    <div class="mission-banner">
+        <strong>Mission Overview:</strong> Real-time environmental intelligence harmonizing orbital thermal detections across NASA &amp; NOAA satellite constellations within a dynamic {{ .Site.Data.active_fires.quota_mb }} MB sliding quota window.
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="filter-controls">
+            <div class="control-group">
+                <label for="aoi-select">Target Region:</label>
+                <select id="aoi-select">
+                    <option value="ALL">All Active Global Regions</option>
+                    {{ range .Site.Data.active_fires.active_aois }}
+                    <option value="{{ .region }}">{{ .region }}</option>
+                    {{ end }}
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="sensor-select">Sensor Platform:</label>
+                <select id="sensor-select">
+                    <option value="ALL">MODIS + VIIRS (Combined)</option>
+                    <option value="MODIS">MODIS Only</option>
+                    <option value="VIIRS">VIIRS Only</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="conf-slider">Min Confidence:</label>
+                <input type="range" id="conf-slider" min="0" max="100" step="5" value="50">
+                <span class="conf-readout" id="conf-value">50%</span>
+            </div>
+        </div>
+        <button class="btn-export" id="export-csv-btn">&#8681; Export Filtered CSV</button>
+    </div>
+
+    <!-- Metrics Grid -->
+    <div class="grid-metrics">
+        <div class="card">
+            <div class="card-title">Active Thermal Events Audited</div>
+            <div class="metric-value" id="metric-events">0</div>
+            <div class="metric-sub" id="metric-events-sub">Loaded from R2 Quota Window</div>
+        </div>
+        <div class="card">
+            <div class="card-title">Data Compression Ratio</div>
+            <div class="metric-value" style="color: var(--accent-green);">~80.5%</div>
+            <div class="metric-sub">ZSTD Parquet Ingestion via Quantticks</div>
+        </div>
+        <div class="card">
+            <div class="card-title">Harmonized Sensor Network</div>
+            <div class="metric-value" style="color: var(--accent-purple);">MODIS &amp; VIIRS</div>
+            <div class="metric-sub">Cross-calibrated global spatial telemetry</div>
+        </div>
+    </div>
+
+    <!-- Interactive ScatterGeo Map (Zoomable Hotspots) -->
+    <div class="grid-charts">
+        <div class="chart-container">
+            <div id="hotspot-geo-map" style="width:100%; height:500px;"></div>
+        </div>
+    </div>
+
+    <!-- Regional & Sensor Breakdown Charts -->
+    <div class="grid-charts-row">
+        <div class="chart-container">
+            <div id="regional-volume" style="width:100%; height:400px;"></div>
+        </div>
+        <div class="chart-container">
+            <div id="sensor-breakdown" style="width:100%; height:400px;"></div>
+        </div>
+    </div>
+
+    <footer>
+        <div><strong>NASA Space Apps Challenge</strong> &bull; Team Quantticks Oracle (St. John's, NL)</div>
+        <div>Data Ingestion &amp; Compression <strong>Powered by Quantticks</strong></div>
+    </footer>
+</div>
+
+<script>
+    // Deduplicate Target Region dropdown options on load
+    const aoiSelect = document.getElementById('aoi-select');
+    const seenRegions = new Set();
+    Array.from(aoiSelect.options).forEach(opt => {
+        if (opt.value !== 'ALL') {
+            if (seenRegions.has(opt.value)) {
+                opt.remove();
+            } else {
+                seenRegions.add(opt.value);
+            }
+        }
+    });
+
+    const telemetryDataset = [
+        {{ range .Site.Data.active_fires.summary_metrics }}
+        { region: "{{ .region }}", sensor: "{{ .sensor_type }}", detections: {{ .total_detections }}, avgConfidence: {{ .avg_confidence }}, maxFrp: {{ .max_frp }}, earliest: "{{ .earliest_source_time }}", latest: "{{ .latest_source_time }}" },
+        {{ end }}
+    ];
+
+    const hotspotDataset = [
+        {{ range .Site.Data.active_fires.hotspots }}
+        { lat: {{ .lat }}, lon: {{ .lon }}, frp: {{ .frp }}, confidence: {{ .confidence }}, sensor: "{{ .sensor_type }}", region: "{{ .region }}" },
+        {{ end }}
+    ];
+
+    const darkLayout = {
+        paper_bgcolor: '#111827', plot_bgcolor: '#111827',
+        font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', color: '#f3f4f6' },
+        margin: { t: 48, r: 20, b: 44, l: 48 }
+    };
+
+    const sensorSelect = document.getElementById('sensor-select');
+    const confSlider = document.getElementById('conf-slider');
+    const confValue = document.getElementById('conf-value');
+    const metricEvents = document.getElementById('metric-events');
+    const metricEventsSub = document.getElementById('metric-events-sub');
+    const exportCsvBtn = document.getElementById('export-csv-btn');
+
+    function renderDashboard() {
+        const selectedRegion = aoiSelect.value;
+        const selectedSensorMode = sensorSelect.value;
+        const minConf = parseFloat(confSlider.value);
+        confValue.textContent = `${minConf}%`;
+
+        // Filter summary metrics
+        const filteredSummary = telemetryDataset.filter(row => {
+            const regionMatch = (selectedRegion === 'ALL' || row.region === selectedRegion);
+            const confMatch = row.avgConfidence >= minConf;
+            let sensorMatch = true;
+            if (selectedSensorMode === 'MODIS') {
+                sensorMatch = row.sensor.toUpperCase().includes('MODIS');
+            } else if (selectedSensorMode === 'VIIRS') {
+                sensorMatch = row.sensor.toUpperCase().includes('VIIRS');
+            }
+            return regionMatch && confMatch && sensorMatch;
+        });
+
+        // Filter precise map hotspots
+        const filteredHotspots = hotspotDataset.filter(pt => {
+            const regionMatch = (selectedRegion === 'ALL' || pt.region === selectedRegion);
+            const confMatch = pt.confidence >= minConf;
+            let sensorMatch = true;
+            if (selectedSensorMode === 'MODIS') {
+                sensorMatch = pt.sensor.toUpperCase().includes('MODIS');
+            } else if (selectedSensorMode === 'VIIRS') {
+                sensorMatch = pt.sensor.toUpperCase().includes('VIIRS');
+            }
+            return regionMatch && confMatch && sensorMatch;
+        });
+
+        let grandTotal = 0;
+        let sensorCounts = {};
+        filteredSummary.forEach(item => {
+            grandTotal += item.detections;
+            sensorCounts[item.sensor] = (sensorCounts[item.sensor] || 0) + item.detections;
+        });
+
+        metricEvents.textContent = grandTotal.toLocaleString();
+        metricEventsSub.textContent = selectedRegion === 'ALL' ? `Harmonized across ${filteredSummary.length} active sensor streams` : `Filtered for region: ${selectedRegion}`;
+
+        // 1. Zoomable ScatterGeo Map
+        let mapCenter = undefined;
+        let mapScale = 1;
+        if (selectedRegion !== 'ALL' && filteredHotspots.length > 0) {
+            const avgLat = filteredHotspots.reduce((s, p) => s + p.lat, 0) / filteredHotspots.length;
+            const avgLon = filteredHotspots.reduce((s, p) => s + p.lon, 0) / filteredHotspots.length;
+            mapCenter = { lat: avgLat, lon: avgLon };
+            mapScale = 3.5;
+        }
+
+        Plotly.react('hotspot-geo-map', [{
+            type: 'scattergeo', mode: 'markers',
+            lat: filteredHotspots.map(p => p.lat), lon: filteredHotspots.map(p => p.lon),
+            text: filteredHotspots.map(p => `${p.region} | FRP: ${p.frp} MW | Conf: ${p.confidence}% | ${p.sensor}`),
+            hoverinfo: 'text',
+            marker: {
+                size: filteredHotspots.map(p => Math.max(5, Math.min(16, Math.sqrt(p.frp)))),
+                color: filteredHotspots.map(p => p.frp), colorscale: 'YlOrRd',
+                colorbar: { title: 'FRP (MW)', tickfont: { color: '#9ca3af' }, thickness: 12 }
+            }
+        }], {
+            ...darkLayout,
+            title: { text: selectedRegion === 'ALL' ? `Global Thermal Hotspots (${selectedSensorMode === 'ALL' ? 'MODIS & VIIRS' : selectedSensorMode + ' Only'})` : `Zoomed Thermal Hotspots — ${selectedRegion}`, font: { size: 16 } },
+            geo: {
+                scope: 'world', projection: { type: 'natural earth', scale: mapScale }, center: mapCenter,
+                bgcolor: '#111827', showland: true, landcolor: '#1f2937', showocean: true, oceancolor: '#090d16',
+                countrycolor: '#374151', coastlinecolor: '#4b5563'
+            }
+        }, { responsive: true, displayModeBar: false });
+
+        // 2. Regional Volume Bar Chart
+        Plotly.react('regional-volume', [{
+            type: 'bar', orientation: 'h',
+            x: filteredSummary.map(d => d.detections),
+            y: filteredSummary.map(d => `${d.region} (${d.sensor})`),
+            marker: { color: filteredSummary.map(d => d.avgConfidence), colorscale: 'Viridis' }
+        }], {
+            ...darkLayout,
+            title: { text: 'Telemetry Volume by Region & Sensor', font: { size: 16 } },
+            xaxis: { title: { text: 'Detections Count', font: { size: 12, color: '#9ca3af' } }, gridcolor: '#1f2937' },
+            yaxis: { tickfont: { size: 10, color: '#d1d5db' } }
+        }, { responsive: true, displayModeBar: false });
+
+        // 3. Sensor Breakdown Chart
+        const sensors = Object.keys(sensorCounts);
+        const sensorValues = Object.values(sensorCounts);
+        Plotly.react('sensor-breakdown', [{
+            x: sensors.length > 0 ? sensors : ['No Active Data'],
+            y: sensorValues.length > 0 ? sensorValues : [0],
+            type: 'bar', marker: { color: ['#10b981', '#8b5cf6', '#3b82f6', '#f59e0b'] }
+        }], {
+            ...darkLayout,
+            title: { text: 'Thermal Detections by Sensor Platform', font: { size: 16 } },
+            xaxis: { title: { text: 'Satellite Sensor', font: { size: 12, color: '#9ca3af' } }, gridcolor: '#1f2937' },
+            yaxis: { title: { text: 'Total Detections', font: { size: 12, color: '#9ca3af' } }, gridcolor: '#1f2937' }
+        }, { responsive: true, displayModeBar: false });
+    }
+
+    exportCsvBtn.addEventListener('click', () => {
+        const filtered = hotspotDataset.filter(pt => {
+            const regionMatch = (aoiSelect.value === 'ALL' || pt.region === aoiSelect.value);
+            const confMatch = pt.confidence >= parseFloat(confSlider.value);
+            let sensorMatch = true;
+            if (sensorSelect.value === 'MODIS') sensorMatch = pt.sensor.toUpperCase().includes('MODIS');
+            else if (sensorSelect.value === 'VIIRS') sensorMatch = pt.sensor.toUpperCase().includes('VIIRS');
+            return regionMatch && confMatch && sensorMatch;
+        });
+        const headers = ['Latitude', 'Longitude', 'FRP_MW', 'Confidence_Pct', 'Sensor_Type', 'Region'];
+        const rows = filtered.map(r => [r.lat, r.lon, r.frp, r.confidence, `"${r.sensor}"`, `"${r.region}"`].join(','));
+        const blob = new Blob([[headers.join(','), ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `quantticks_nasa_hotspots_${sensorSelect.value.toLowerCase()}_${aoiSelect.value.toLowerCase().replace(/[\s\/]+/g, '_')}.csv`);
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    });
+
+    aoiSelect.addEventListener('change', renderDashboard);
+    sensorSelect.addEventListener('change', renderDashboard);
+    confSlider.addEventListener('input', renderDashboard);
+    renderDashboard();
+</script>
+
+</body>
+</html>
